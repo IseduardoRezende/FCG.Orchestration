@@ -1,0 +1,28 @@
+FIAP - Pós Tech Arquitetura de Sistemas .NET
+Tech Challenge - Fase 2 - FIAP Cloud Games (FCG)
+
+Integrantes
+- Nome: <NOME COMPLETO>          RM: <RM>          Discord: <USUARIO DISCORD>
+
+Repositórios
+- Orquestração (docker-compose, k8s de infraestrutura e README principal):
+  https://github.com/IseduardoRezende/FCG.Orchestration
+- UsersAPI (cadastro, autenticação JWT e roles; publica UserCreatedEvent):
+  https://github.com/IseduardoRezende/FCG.UsersAPI
+- CatalogAPI (jogos, pedidos e biblioteca; publica OrderPlacedEvent e consome PaymentProcessedEvent):
+  https://github.com/IseduardoRezende/FCG.CatalogAPI
+- PaymentsAPI (pagamento simulado; consome OrderPlacedEvent e publica PaymentProcessedEvent):
+  https://github.com/IseduardoRezende/FCG.PaymentsAPI
+- NotificationsAPI (e-mails simulados via log; consome UserCreatedEvent e PaymentProcessedEvent):
+  https://github.com/IseduardoRezende/FCG.NotificationsAPI
+
+Vídeo de demonstração (até 15 minutos)
+- <LINK DO VIDEO>
+
+Resumo da solução
+- 4 microsserviços .NET 10, cada um em seu repositório, com camadas API / Application / Domain / Infrastructure.
+- Comunicação assíncrona por eventos com RabbitMQ e MassTransit 8.
+- PostgreSQL com um banco por serviço (fcg_users, fcg_catalog, fcg_payments).
+- Dockerfile multi-stage em cada serviço e docker-compose para o ecossistema completo.
+- Manifestos Kubernetes (Deployment, Service, ConfigMap, Secret) em cada serviço, mais Postgres e RabbitMQ no repositório de orquestração.
+- Testes unitários (xUnit v3 + Moq) e de integração (WebApplicationFactory + Testcontainers + MassTransit Test Harness) em cada serviço, executados no CI.

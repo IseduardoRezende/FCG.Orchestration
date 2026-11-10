@@ -1,0 +1,99 @@
+name: fcg
+
+x-jwt: &jwt
+  TokenSettings__Issuer: "FCG.Users"
+  TokenSettings__Audience: "FCG.Client"
+  TokenSettings__Key: "${JWT_KEY:-fcg-phase2-shared-jwt-key-0123456789-abcdefghijklmnopqrstuvwxyz}"
+
+x-rabbitmq: &rabbitmq
+  RabbitMq__Host: "rabbitmq"
+  RabbitMq__VirtualHost: "/"
+  RabbitMq__Username: "fcg"
+  RabbitMq__Password: "fcg"
+
+x-depends-on-infra: &depends-on-infra
+  postgres:
+    condition: service_healthy
+  rabbitmq:
+    condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: "fcg"
+      RABBITMQ_DEFAULT_PASS: "fcg"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  users-api:
+    build: ../FCG.UsersAPI
+    image: fcg-users-api:latest
+    environment:
+      <<: [*jwt, *rabbitmq]
+      ConnectionStrings__DbConnection: "Host=postgres;Port=5432;Database=fcg_users;Username=postgres;Password=postgres"
+      TokenSettings__DaysUntilExpires: "1"
+    ports:
+      - "5101:8080"
+    depends_on: *depends-on-infra
+
+  catalog-api:
+    build: ../FCG.CatalogAPI
+    image: fcg-catalog-api:latest
+    environment:
+      <<: [*jwt, *rabbitmq]
+      ConnectionStrings__DbConnection: "Host=postgres;Port=5432;Database=fcg_catalog;Username=postgres;Password=postgres"
+      RabbitMq__PaymentProcessedQueue: "catalog-payment-processed"
+    ports:
+      - "5102:8080"
+    depends_on: *depends-on-infra
+
+  payments-api:
+    build: ../FCG.PaymentsAPI
+    image: fcg-payments-api:latest
+    environment:
+      <<: [*jwt, *rabbitmq]
+      ConnectionStrings__DbConnection: "Host=postgres;Port=5432;Database=fcg_payments;Username=postgres;Password=postgres"
+      RabbitMq__OrderPlacedQueue: "payments-order-placed"
+      Payments__MaxApprovedAmount: "${PAYMENTS_MAX_APPROVED_AMOUNT:-100.00}"
+    ports:
+      - "5103:8080"
+    depends_on: *depends-on-infra
+
+  notifications-api:
+    build: ../FCG.NotificationsAPI
+    image: fcg-notifications-api:latest
+    environment:
+      <<: *rabbitmq
+      RabbitMq__UserCreatedQueue: "notifications-user-created"
+      RabbitMq__PaymentProcessedQueue: "notifications-payment-processed"
+    ports:
+      - "5104:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
