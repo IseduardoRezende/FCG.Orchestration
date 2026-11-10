@@ -134,11 +134,15 @@ Todos os recursos vão para o namespace `fcg`. Os serviços se encontram pelos n
 
 ```
 k8s/
+  all/         todos os manifestos (infra + 4 serviços) para "kubectl apply -f ."
+    00-namespace.yaml  01-configmaps.yaml  02-secrets.yaml  03-deployments.yaml  04-services.yaml
   namespace.yaml
   postgres/    configmap (init.sql), secret, deployment, service
   rabbitmq/    configmap, secret, deployment, service (5672 e 15672)
   kustomization.yaml   agrega postgres, rabbitmq e ../../FCG.*API/k8s
 ```
+
+A pasta `k8s/all` replica os manifestos de `k8s/postgres`, `k8s/rabbitmq` e do `k8s/` de cada serviço. Ao alterar um deles, mantenha a cópia em `k8s/all` igual.
 
 ### Opção A: script (Kind)
 
@@ -160,7 +164,15 @@ kubectl -n fcg get pods
 
 No Kubernetes do Docker Desktop, as imagens locais já ficam visíveis (`imagePullPolicy: IfNotPresent`), então não é preciso rodar `kind load`.
 
-Para aplicar sem o kustomize, rode `kubectl apply -f` em cada pasta (`k8s/namespace.yaml`, `k8s/postgres`, `k8s/rabbitmq` e o `k8s/` de cada serviço) usando `-n fcg`.
+### Opção C: kubectl apply -f . (sem kustomize)
+
+```powershell
+cd k8s/all
+kubectl apply -f .
+kubectl -n fcg get pods
+```
+
+Os arquivos são aplicados em ordem alfabética, então o namespace (`00-namespace.yaml`) é criado antes dos demais recursos.
 
 Resultado esperado:
 
@@ -186,7 +198,7 @@ kubectl -n fcg port-forward svc/rabbitmq 15672:15672
 kubectl -n fcg logs -f deploy/fcg-notifications-api
 ```
 
-Para remover tudo: `kubectl delete -k k8s`, ou `kind delete cluster --name fcg`.
+Para remover tudo: `kubectl delete -k k8s` (ou `kubectl delete -f .` dentro de `k8s/all`), ou `kind delete cluster --name fcg`.
 
 ## Testando os fluxos
 

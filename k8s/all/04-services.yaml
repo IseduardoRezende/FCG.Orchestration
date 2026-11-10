@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: fcg
+  labels:
+    app: postgres
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: fcg
+  labels:
+    app: rabbitmq
+spec:
+  type: ClusterIP
+  selector:
+    app: rabbitmq
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: 5672
+    - name: management
+      port: 15672
+      targetPort: 15672
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fcg-users-api
+  namespace: fcg
+  labels:
+    app: fcg-users-api
+spec:
+  type: ClusterIP
+  selector:
+    app: fcg-users-api
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fcg-catalog-api
+  namespace: fcg
+  labels:
+    app: fcg-catalog-api
+spec:
+  type: ClusterIP
+  selector:
+    app: fcg-catalog-api
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fcg-payments-api
+  namespace: fcg
+  labels:
+    app: fcg-payments-api
+spec:
+  type: ClusterIP
+  selector:
+    app: fcg-payments-api
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fcg-notifications-api
+  namespace: fcg
+  labels:
+    app: fcg-notifications-api
+spec:
+  type: ClusterIP
+  selector:
+    app: fcg-notifications-api
+  ports:
+    - port: 80
+      targetPort: 8080

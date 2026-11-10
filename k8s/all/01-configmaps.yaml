@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: fcg
+  labels:
+    app: postgres
+data:
+  init.sql: |
+    CREATE DATABASE fcg_users;
+    CREATE DATABASE fcg_catalog;
+    CREATE DATABASE fcg_payments;
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config
+  namespace: fcg
+  labels:
+    app: rabbitmq
+data:
+  RABBITMQ_DEFAULT_VHOST: "/"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fcg-users-config
+  namespace: fcg
+  labels:
+    app: fcg-users-api
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  RabbitMq__Host: "rabbitmq"
+  RabbitMq__VirtualHost: "/"
+  TokenSettings__Issuer: "FCG.Users"
+  TokenSettings__Audience: "FCG.Client"
+  TokenSettings__DaysUntilExpires: "1"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fcg-catalog-config
+  namespace: fcg
+  labels:
+    app: fcg-catalog-api
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  RabbitMq__Host: "rabbitmq"
+  RabbitMq__VirtualHost: "/"
+  RabbitMq__PaymentProcessedQueue: "catalog-payment-processed"
+  TokenSettings__Issuer: "FCG.Users"
+  TokenSettings__Audience: "FCG.Client"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fcg-payments-config
+  namespace: fcg
+  labels:
+    app: fcg-payments-api
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  RabbitMq__Host: "rabbitmq"
+  RabbitMq__VirtualHost: "/"
+  RabbitMq__OrderPlacedQueue: "payments-order-placed"
+  Payments__MaxApprovedAmount: "100.00"
+  TokenSettings__Issuer: "FCG.Users"
+  TokenSettings__Audience: "FCG.Client"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fcg-notifications-config
+  namespace: fcg
+  labels:
+    app: fcg-notifications-api
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  RabbitMq__Host: "rabbitmq"
+  RabbitMq__VirtualHost: "/"
+  RabbitMq__UserCreatedQueue: "notifications-user-created"
+  RabbitMq__PaymentProcessedQueue: "notifications-payment-processed"
